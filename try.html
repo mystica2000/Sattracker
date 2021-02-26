@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+ <style>
+    #mapid{
+        height: 600px;
+        width: 800px;
+    }
+    body{
+        background-color: #1e212d;
+    }
+    div{
+        position:absolute;
+        top:0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin:auto;
+    }
+</style>
+
+</head>
+<body>
+    <div id="mapid" ></div>
+    <script>
+        
+var map = L.map('mapid').setView([51.505, -0.09], 7);
+
+L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=jbnnkTlCAhFxYIlAH45h', {
+    tileSize: 512,
+    zoomOffset: -1,
+    minZoom: 2,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+var iss_icon = L.icon({
+    iconUrl:'ISSIcon.png',
+    shadowUrl:'ISSIcon_shadow.png',
+    iconSize: [50,30],
+    shadowSize: [60, 40],
+    shadowAnchor: [30, 15],
+    iconAnchor: [25,15]
+});
+
+var iss = L.marker([51.505,-0.09],{icon:iss_icon}).addTo(map);
+var circle_icon = L.circle([51.505,-0.09],200e3,{color:"#c22",opacity:0.3,weight:1,fillColor:"#c22",fillOpacity:0.1}).addTo(map);
+
+function moveISS()
+{
+    fetch('http://api.open-notify.org/iss-now.json')
+        .then(
+            function(response)
+            {
+                if(response.status !==200 )
+                {
+                    console.log('Looks like there was problem with Open Notify API' + response.status);
+                    return;
+                }
+                response.json().then(function(data)
+                {
+                    var lat = data.iss_position.latitude;
+                    var long = data.iss_position.longitude;
+                    console.log(lat,long);
+                    iss.setLatLng([lat,long]);
+                    circle_icon.setLatLng([lat,long]);
+                    map.panTo([lat,long],animate=true);
+                    
+    global_iss = setTimeout(moveISS(),5000);
+                });
+            }
+        ).catch(function(err)
+        {
+            console.log('Fetch Error ',err);
+        });
+
+}
+moveISS();
+
+    </script>
+</body>
+</html>
